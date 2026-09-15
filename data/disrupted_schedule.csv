@@ -1,0 +1,61 @@
+vessel_id,port_idx,port_code,port_name,leg_dist_nm,sail_speed_kn,sched_arrival,actual_arrival,delay_hrs,anchorage_hrs,skipped,disruption,scenario
+0,0,JPYOK,Yokohama,0,18.3,0.0,0.0,0.0,0.0,0,False,disrupted
+0,1,CNSHA,Shanghai,1094,18.3,101.78,101.78,0.0,0.0,0,False,disrupted
+0,2,CNNBO,Ningbo,97,18.3,149.08,149.08,0.0,0.0,0,False,disrupted
+0,3,CNYTN,Yantian,734,18.3,231.19,231.19,0.0,0.0,0,False,disrupted
+0,4,USLAX,Los Angeles,5445,18.3,570.73,725.34,154.6,154.6,0,True,disrupted
+0,5,USLGB,Long Beach,21,25.0,613.88,907.41,293.53,143.43,0,True,disrupted
+1,0,JPYOK,Yokohama,0,18.3,168.0,168.0,0.0,0.0,0,False,disrupted
+1,1,CNSHA,Shanghai,1094,18.3,269.78,269.78,0.0,0.0,0,False,disrupted
+1,2,CNNBO,Ningbo,97,18.3,317.08,317.08,0.0,0.0,0,False,disrupted
+1,3,CNYTN,Yantian,734,18.3,399.19,399.19,0.0,0.0,0,False,disrupted
+1,4,USLAX,Los Angeles,5445,18.3,738.73,893.91,155.17,155.17,0,True,disrupted
+1,5,USLGB,Long Beach,21,25.0,781.88,1072.2,290.32,139.65,0,True,disrupted
+2,0,JPYOK,Yokohama,0,18.3,336.0,336.0,0.0,0.0,0,False,disrupted
+2,1,CNSHA,Shanghai,1094,18.3,437.78,437.78,0.0,0.0,0,False,disrupted
+2,2,CNNBO,Ningbo,97,18.3,485.08,485.08,0.0,0.0,0,False,disrupted
+2,3,CNYTN,Yantian,734,18.3,567.19,567.19,0.0,0.0,0,False,disrupted
+2,4,USLAX,Los Angeles,5445,18.3,906.73,1048.01,141.27,141.27,0,True,disrupted
+2,5,USLGB,Long Beach,21,25.0,949.88,1222.59,272.71,135.94,0,True,disrupted
+3,0,JPYOK,Yokohama,0,18.3,504.0,504.0,0.0,0.0,0,False,disrupted
+3,1,CNSHA,Shanghai,1094,18.3,605.78,605.78,0.0,0.0,0,False,disrupted
+3,2,CNNBO,Ningbo,97,18.3,653.08,653.08,0.0,0.0,0,False,disrupted
+3,3,CNYTN,Yantian,734,18.3,735.19,735.19,0.0,0.0,0,False,disrupted
+3,4,USLAX,Los Angeles,5445,18.3,1074.73,1188.16,113.42,113.42,0,True,disrupted
+3,5,USLGB,Long Beach,21,25.0,1117.88,1344.84,226.96,118.04,0,True,disrupted
+4,0,JPYOK,Yokohama,0,18.3,672.0,672.0,0.0,0.0,0,False,disrupted
+4,1,CNSHA,Shanghai,1094,18.3,773.78,773.78,0.0,0.0,0,False,disrupted
+4,2,CNNBO,Ningbo,97,18.3,821.08,821.08,0.0,0.0,0,False,disrupted
+4,3,CNYTN,Yantian,734,18.3,903.19,903.19,0.0,0.0,0,False,disrupted
+4,4,USLAX,Los Angeles,5445,18.3,1242.73,1356.49,113.76,113.76,0,True,disrupted
+4,5,USLGB,Long Beach,21,25.0,1285.88,1542.77,256.89,147.64,0,True,disrupted
+5,0,JPYOK,Yokohama,0,18.3,840.0,840.0,0.0,0.0,0,False,disrupted
+5,1,CNSHA,Shanghai,1094,18.3,941.78,941.78,0.0,0.0,0,False,disrupted
+5,2,CNNBO,Ningbo,97,18.3,989.08,989.08,0.0,0.0,0,False,disrupted
+5,3,CNYTN,Yantian,734,18.3,1071.19,1071.19,0.0,0.0,0,False,disrupted
+5,4,USLAX,Los Angeles,5445,18.3,1410.73,1540.34,129.6,129.6,0,True,disrupted
+5,5,USLGB,Long Beach,21,25.0,1453.88,1719.46,265.58,140.48,0,True,disrupted
+6,0,JPYOK,Yokohama,0,18.3,1008.0,1008.0,0.0,0.0,0,False,disrupted
+6,1,CNSHA,Shanghai,1094,18.3,1109.78,1109.78,0.0,0.0,0,False,disrupted
+6,2,CNNBO,Ningbo,97,18.3,1157.08,1157.08,0.0,0.0,0,False,disrupted
+6,3,CNYTN,Yantian,734,18.3,1239.19,1239.19,0.0,0.0,0,False,disrupted
+6,4,USLAX,Los Angeles,5445,18.3,1578.73,1741.56,162.82,162.82,0,True,disrupted
+6,5,USLGB,Long Beach,21,25.0,1621.88,1906.16,284.28,125.96,0,True,disrupted
+7,0,JPYOK,Yokohama,0,18.3,1176.0,1176.0,0.0,0.0,0,False,disrupted
+7,1,CNSHA,Shanghai,1094,18.3,1277.78,1277.78,0.0,0.0,0,False,disrupted
+7,2,CNNBO,Ningbo,97,18.3,1325.08,1325.08,0.0,0.0,0,False,disrupted
+7,3,CNYTN,Yantian,734,18.3,1407.19,1407.19,0.0,0.0,0,False,disrupted
+7,4,USLAX,Los Angeles,5445,18.3,1746.73,1881.71,134.98,134.98,0,True,disrupted
+7,5,USLGB,Long Beach,21,25.0,1789.88,2074.66,284.78,154.31,0,True,disrupted
+8,0,JPYOK,Yokohama,0,18.3,1344.0,1344.0,0.0,0.0,0,False,disrupted
+8,1,CNSHA,Shanghai,1094,18.3,1445.78,1445.78,0.0,0.0,0,False,disrupted
+8,2,CNNBO,Ningbo,97,18.3,1493.08,1493.08,0.0,0.0,0,False,disrupted
+8,3,CNYTN,Yantian,734,18.3,1575.19,1575.19,0.0,0.0,0,False,disrupted
+8,4,USLAX,Los Angeles,5445,18.3,1914.73,2039.54,124.81,124.81,0,True,disrupted
+8,5,USLGB,Long Beach,21,25.0,1957.88,2194.5,236.62,116.31,0,True,disrupted
+9,0,JPYOK,Yokohama,0,18.3,1512.0,1512.0,0.0,0.0,0,False,disrupted
+9,1,CNSHA,Shanghai,1094,18.3,1613.78,1613.78,0.0,0.0,0,False,disrupted
+9,2,CNNBO,Ningbo,97,18.3,1661.08,1661.08,0.0,0.0,0,False,disrupted
+9,3,CNYTN,Yantian,734,18.3,1743.19,1743.19,0.0,0.0,0,False,disrupted
+9,4,USLAX,Los Angeles,5445,18.3,2082.73,2210.96,128.23,128.23,0,True,disrupted
+9,5,USLGB,Long Beach,21,25.0,2125.88,2370.63,244.75,121.03,0,True,disrupted

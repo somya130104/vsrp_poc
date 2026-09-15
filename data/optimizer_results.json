@@ -1,0 +1,162 @@
+{
+  "48": {
+    "status": "Optimal",
+    "optimal_speeds": [
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0
+    ],
+    "skip_decisions": {
+      "Shanghai": 1,
+      "Ningbo": 0,
+      "Yantian": 1,
+      "Los Angeles": 0,
+      "Long Beach": 0
+    },
+    "total_delay_hrs": 522.5,
+    "n_skips": 2,
+    "time_recovered_hrs": -474.5,
+    "costs": {
+      "baseline": {
+        "fuel": 58296671,
+        "port_fees": 1050000,
+        "delay": 384000,
+        "skip_penalty": 0,
+        "total": 59730671
+      },
+      "optimized": {
+        "fuel": 17407707,
+        "port_fees": 750000,
+        "delay": 4179668,
+        "skip_penalty": 440000,
+        "total": 22777375
+      }
+    },
+    "savings_pct": 61.9,
+    "disruption_delay_input": 48.0
+  },
+  "96": {
+    "status": "Optimal",
+    "optimal_speeds": [
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0,
+      10.0
+    ],
+    "skip_decisions": {
+      "Shanghai": 1,
+      "Ningbo": 0,
+      "Yantian": 1,
+      "Los Angeles": 0,
+      "Long Beach": 0
+    },
+    "total_delay_hrs": 570.5,
+    "n_skips": 2,
+    "time_recovered_hrs": -474.5,
+    "costs": {
+      "baseline": {
+        "fuel": 58296671,
+        "port_fees": 1050000,
+        "delay": 768000,
+        "skip_penalty": 0,
+        "total": 60114671
+      },
+      "optimized": {
+        "fuel": 17407707,
+        "port_fees": 750000,
+        "delay": 4563668,
+        "skip_penalty": 440000,
+        "total": 23161375
+      }
+    },
+    "savings_pct": 61.5,
+    "disruption_delay_input": 96.0
+  },
+  "140": {
+    "status": "Optimal",
+    "optimal_speeds": [
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76
+    ],
+    "skip_decisions": {
+      "Shanghai": 1,
+      "Ningbo": 0,
+      "Yantian": 1,
+      "Los Angeles": 0,
+      "Long Beach": 0
+    },
+    "total_delay_hrs": 6.2,
+    "n_skips": 2,
+    "time_recovered_hrs": 133.8,
+    "costs": {
+      "baseline": {
+        "fuel": 58296671,
+        "port_fees": 1050000,
+        "delay": 1120000,
+        "skip_penalty": 0,
+        "total": 60466671
+      },
+      "optimized": {
+        "fuel": 67997237,
+        "port_fees": 750000,
+        "delay": 49279,
+        "skip_penalty": 440000,
+        "total": 69236516
+      }
+    },
+    "savings_pct": 0.0,
+    "disruption_delay_input": 140.0
+  },
+  "168": {
+    "status": "Optimal",
+    "optimal_speeds": [
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76,
+      19.76
+    ],
+    "skip_decisions": {
+      "Shanghai": 1,
+      "Ningbo": 0,
+      "Yantian": 1,
+      "Los Angeles": 0,
+      "Long Beach": 0
+    },
+    "total_delay_hrs": 34.2,
+    "n_skips": 2,
+    "time_recovered_hrs": 133.8,
+    "costs": {
+      "baseline": {
+        "fuel": 58296671,
+        "port_fees": 1050000,
+        "delay": 1344000,
+        "skip_penalty": 0,
+        "total": 60690671
+      },
+      "optimized": {
+        "fuel": 67997237,
+        "port_fees": 750000,
+        "delay": 273279,
+        "skip_penalty": 440000,
+        "total": 69460516
+      }
+    },
+    "savings_pct": 0.0,
+    "disruption_delay_input": 168.0
+  }
+}

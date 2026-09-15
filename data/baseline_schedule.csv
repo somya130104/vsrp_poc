@@ -1,0 +1,71 @@
+vessel_id,port_idx,port_code,port_name,leg_dist_nm,sail_speed_kn,sched_arrival,actual_arrival,delay_hrs,anchorage_hrs,skipped,disruption,scenario
+0,0,JPYOK,Yokohama,0,18.3,0.0,0.99,0.99,0.0,0,False,baseline
+0,1,CNSHA,Shanghai,1094,18.3,101.78,101.5,0.0,0.0,0,False,baseline
+0,2,CNNBO,Ningbo,97,18.3,149.08,150.38,1.3,0.0,0,False,baseline
+0,3,CNYTN,Yantian,734,18.3,231.19,234.24,3.05,0.0,0,False,baseline
+0,4,USLAX,Los Angeles,5445,18.3,570.73,570.26,0.0,0.0,0,False,baseline
+0,5,USLGB,Long Beach,21,18.3,613.88,613.41,0.0,0.0,0,False,baseline
+0,6,USOAK,Oakland,386,18.3,676.97,680.13,3.16,0.0,0,False,baseline
+1,0,JPYOK,Yokohama,0,18.3,168.0,169.53,1.53,0.0,0,False,baseline
+1,1,CNSHA,Shanghai,1094,18.3,269.78,268.84,0.0,0.0,0,False,baseline
+1,2,CNNBO,Ningbo,97,18.3,317.08,318.17,1.09,0.0,0,False,baseline
+1,3,CNYTN,Yantian,734,18.3,399.19,398.26,0.0,0.0,0,False,baseline
+1,4,USLAX,Los Angeles,5445,18.3,738.73,737.8,0.0,0.0,0,False,baseline
+1,5,USLGB,Long Beach,21,18.3,781.88,782.36,0.48,0.0,0,False,baseline
+1,6,USOAK,Oakland,386,18.3,844.97,841.15,0.0,0.0,0,False,baseline
+2,0,JPYOK,Yokohama,0,18.3,336.0,332.55,0.0,0.0,0,False,baseline
+2,1,CNSHA,Shanghai,1094,18.3,437.78,436.66,0.0,0.0,0,False,baseline
+2,2,CNNBO,Ningbo,97,18.3,485.08,483.06,0.0,0.0,0,False,baseline
+2,3,CNYTN,Yantian,734,18.3,567.19,567.82,0.63,0.0,0,False,baseline
+2,4,USLAX,Los Angeles,5445,18.3,906.73,904.92,0.0,0.0,0,False,baseline
+2,5,USLGB,Long Beach,21,18.3,949.88,947.06,0.0,0.0,0,False,baseline
+2,6,USOAK,Oakland,386,18.3,1012.97,1015.9,2.93,0.0,0,False,baseline
+3,0,JPYOK,Yokohama,0,18.3,504.0,503.55,0.0,0.0,0,False,baseline
+3,1,CNSHA,Shanghai,1094,18.3,605.78,605.92,0.14,0.0,0,False,baseline
+3,2,CNNBO,Ningbo,97,18.3,653.08,650.23,0.0,0.0,0,False,baseline
+3,3,CNYTN,Yantian,734,18.3,735.19,734.1,0.0,0.0,0,False,baseline
+3,4,USLAX,Los Angeles,5445,18.3,1074.73,1074.95,0.22,0.0,0,False,baseline
+3,5,USLGB,Long Beach,21,18.3,1117.88,1115.58,0.0,0.0,0,False,baseline
+3,6,USOAK,Oakland,386,18.3,1180.97,1181.72,0.75,0.0,0,False,baseline
+4,0,JPYOK,Yokohama,0,18.3,672.0,670.8,0.0,0.0,0,False,baseline
+4,1,CNSHA,Shanghai,1094,18.3,773.78,773.2,0.0,0.0,0,False,baseline
+4,2,CNNBO,Ningbo,97,18.3,821.08,819.88,0.0,0.0,0,False,baseline
+4,3,CNYTN,Yantian,734,18.3,903.19,906.9,3.7,0.0,0,False,baseline
+4,4,USLAX,Los Angeles,5445,18.3,1242.73,1242.71,0.0,0.0,0,False,baseline
+4,5,USLGB,Long Beach,21,18.3,1285.88,1283.76,0.0,0.0,0,False,baseline
+4,6,USOAK,Oakland,386,18.3,1348.97,1350.62,1.65,0.0,0,False,baseline
+5,0,JPYOK,Yokohama,0,18.3,840.0,837.56,0.0,0.0,0,False,baseline
+5,1,CNSHA,Shanghai,1094,18.3,941.78,942.2,0.42,0.0,0,False,baseline
+5,2,CNNBO,Ningbo,97,18.3,989.08,985.16,0.0,0.0,0,False,baseline
+5,3,CNYTN,Yantian,734,18.3,1071.19,1068.53,0.0,0.0,0,False,baseline
+5,4,USLAX,Los Angeles,5445,18.3,1410.73,1411.13,0.39,0.0,0,False,baseline
+5,5,USLGB,Long Beach,21,18.3,1453.88,1455.36,1.48,0.0,0,False,baseline
+5,6,USOAK,Oakland,386,18.3,1516.97,1517.32,0.34,0.0,0,False,baseline
+6,0,JPYOK,Yokohama,0,18.3,1008.0,1007.77,0.0,0.0,0,False,baseline
+6,1,CNSHA,Shanghai,1094,18.3,1109.78,1109.18,0.0,0.0,0,False,baseline
+6,2,CNNBO,Ningbo,97,18.3,1157.08,1154.12,0.0,0.0,0,False,baseline
+6,3,CNYTN,Yantian,734,18.3,1239.19,1237.75,0.0,0.0,0,False,baseline
+6,4,USLAX,Los Angeles,5445,18.3,1578.73,1577.81,0.0,0.0,0,False,baseline
+6,5,USLGB,Long Beach,21,18.3,1621.88,1623.99,2.11,0.0,0,False,baseline
+6,6,USOAK,Oakland,386,18.3,1684.97,1685.66,0.69,0.0,0,False,baseline
+7,0,JPYOK,Yokohama,0,18.3,1176.0,1172.47,0.0,0.0,0,False,baseline
+7,1,CNSHA,Shanghai,1094,18.3,1277.78,1278.43,0.65,0.0,0,False,baseline
+7,2,CNNBO,Ningbo,97,18.3,1325.08,1324.31,0.0,0.0,0,False,baseline
+7,3,CNYTN,Yantian,734,18.3,1407.19,1405.84,0.0,0.0,0,False,baseline
+7,4,USLAX,Los Angeles,5445,18.3,1746.73,1747.96,1.22,0.0,0,False,baseline
+7,5,USLGB,Long Beach,21,18.3,1789.88,1791.94,2.06,0.0,0,False,baseline
+7,6,USOAK,Oakland,386,18.3,1852.97,1854.84,1.86,0.0,0,False,baseline
+8,0,JPYOK,Yokohama,0,18.3,1344.0,1342.32,0.0,0.0,0,False,baseline
+8,1,CNSHA,Shanghai,1094,18.3,1445.78,1445.16,0.0,0.0,0,False,baseline
+8,2,CNNBO,Ningbo,97,18.3,1493.08,1493.74,0.66,0.0,0,False,baseline
+8,3,CNYTN,Yantian,734,18.3,1575.19,1577.14,1.95,0.0,0,False,baseline
+8,4,USLAX,Los Angeles,5445,18.3,1914.73,1913.77,0.0,0.0,0,False,baseline
+8,5,USLGB,Long Beach,21,18.3,1957.88,1957.51,0.0,0.0,0,False,baseline
+8,6,USOAK,Oakland,386,18.3,2020.97,2018.76,0.0,0.0,0,False,baseline
+9,0,JPYOK,Yokohama,0,18.3,1512.0,1509.61,0.0,0.0,0,False,baseline
+9,1,CNSHA,Shanghai,1094,18.3,1613.78,1615.41,1.63,0.0,0,False,baseline
+9,2,CNNBO,Ningbo,97,18.3,1661.08,1663.79,2.71,0.0,0,False,baseline
+9,3,CNYTN,Yantian,734,18.3,1743.19,1743.05,0.0,0.0,0,False,baseline
+9,4,USLAX,Los Angeles,5445,18.3,2082.73,2084.74,2.01,0.0,0,False,baseline
+9,5,USLGB,Long Beach,21,18.3,2125.88,2126.6,0.72,0.0,0,False,baseline
+9,6,USOAK,Oakland,386,18.3,2188.97,2187.68,0.0,0.0,0,False,baseline

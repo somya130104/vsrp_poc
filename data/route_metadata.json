@@ -1,0 +1,80 @@
+{
+  "ports": [
+    {
+      "code": "JPYOK",
+      "name": "Yokohama",
+      "lat": 35.45,
+      "lon": 139.65,
+      "berths": 5,
+      "H_p": 1.0
+    },
+    {
+      "code": "CNSHA",
+      "name": "Shanghai",
+      "lat": 31.23,
+      "lon": 121.47,
+      "berths": 8,
+      "H_p": 1.0
+    },
+    {
+      "code": "CNNBO",
+      "name": "Ningbo",
+      "lat": 29.87,
+      "lon": 121.54,
+      "berths": 6,
+      "H_p": 1.0
+    },
+    {
+      "code": "CNYTN",
+      "name": "Yantian",
+      "lat": 22.58,
+      "lon": 114.27,
+      "berths": 7,
+      "H_p": 1.0
+    },
+    {
+      "code": "USLAX",
+      "name": "Los Angeles",
+      "lat": 33.74,
+      "lon": -118.27,
+      "berths": 4,
+      "H_p": 1.0
+    },
+    {
+      "code": "USLGB",
+      "name": "Long Beach",
+      "lat": 33.75,
+      "lon": -118.19,
+      "berths": 5,
+      "H_p": 1.0
+    },
+    {
+      "code": "USOAK",
+      "name": "Oakland",
+      "lat": 37.8,
+      "lon": -122.28,
+      "berths": 3,
+      "H_p": 1.0
+    }
+  ],
+  "leg_distances": [
+    1094,
+    97,
+    734,
+    5445,
+    21,
+    386,
+    4536
+  ],
+  "n_vessels": 10,
+  "teu_capacity": 14000,
+  "v_default": 18.3,
+  "v_min": 10.0,
+  "v_max": 25.0,
+  "t_berth_base": 42.0,
+  "delta": 5.813e-05,
+  "port_fee_usd": 150000,
+  "delay_penalty_usd_hr": 8000,
+  "skip_penalty_usd": 220000,
+  "bunker_price_usd_mt": 650
+}
