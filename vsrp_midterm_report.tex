@@ -1,0 +1,160 @@
+\documentclass[12pt]{article}
+
+%----------------------------------------------------------------------------------------
+%   PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+\usepackage{amssymb}
+\usepackage{amsmath} 
+\usepackage{graphicx}
+\usepackage[numbers]{natbib}
+\usepackage{multicol}
+\usepackage{setspace}
+\usepackage[hidelinks]{hyperref}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{geometry}
+
+% Margins Setup
+\usepackage[a4paper, top=1in, bottom=1in, left=1.25in, right=1in]{geometry}
+
+% User Details
+\def\mytitle{Vessel Schedule Recovery Problem: Integrating Optimization and Machine Learning for Port Congestion}
+\def\myname{Somya Bhadada}
+\def\mysupervisor{Prof. Harshad Hemantrao Shrigondekar} 
+\def\myrollno{22MF3IM24}
+\def\mydep{Centre of Excellence on Safety Engineering and Analytics}
+\def\mydegreedate{September 2026}
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%   TITLE PAGE
+%----------------------------------------------------------------------------------------
+\begin{titlepage}
+    \begin{center}
+        \vspace*{0.5cm} 
+        
+        \Huge
+        \textbf{\mytitle}
+        
+        \vspace{1.0cm} 
+        
+        \large
+        \textbf{by}
+        
+        \vspace{0.3cm} 
+        
+        \textbf{\myname} \\
+        (Roll No: \myrollno)
+        
+        \vspace{1.0cm} 
+        
+        % Logo inclusion
+        % \includegraphics[width=0.25\textwidth]{Images/iitkgplogo.jpg} 
+        
+        \vspace{1.0cm} 
+        
+        \textbf{Under the guidance of}
+        
+        \vspace{0.3cm} 
+        
+        \textbf{\mysupervisor}
+        
+        \vfill 
+        
+        \Large
+        \textbf{\mydep}\\
+        \textbf{Indian Institute of Technology Kharagpur}\\
+        \textbf{\mydegreedate}
+        
+        \vspace{1cm} 
+    \end{center}
+\end{titlepage}
+
+%----------------------------------------------------------------------------------------
+%   ABSTRACT & TOC
+%----------------------------------------------------------------------------------------
+\clearpage
+\pagenumbering{roman}
+
+\begin{center}
+    \Large \textbf{ABSTRACT}
+\end{center}
+\vspace{0.3cm}
+\noindent Global supply chains are highly vulnerable to severe port congestion. When delayed, operators face the Vessel Schedule Recovery Problem (VSRP): balancing costly speed increases against cargo rollover penalties from skipping ports. This mid-term report outlines a hybrid decision-support framework combining Operations Research (OR) and Machine Learning (ML). Due to the lack of counterfactuals in raw AIS data, we built a synthetic simulation calibrated to the FP1 pendulum service. A Mixed Integer Linear Programming (MILP) model generated mathematically optimal recovery strategies, which then trained an XGBoost classifier. The system currently serves real-time predictive analytics via a dashboard. The ML model achieved 76\% accuracy, revealing a realistic 71/29 class imbalance that guides our next phases.
+
+\vspace{0.5cm}
+\tableofcontents
+
+%----------------------------------------------------------------------------------------
+%   MAIN CONTENT
+%----------------------------------------------------------------------------------------
+\clearpage
+\pagenumbering{arabic}
+\baselineskip=16pt plus1pt
+
+\section*{1. Introduction and Objectives}
+\addcontentsline{toc}{section}{1. Introduction and Objectives}
+The container shipping industry operates on tight schedules heavily impacted by events like the 2021 COVID-19 port congestion. When vessels fall behind, carriers must execute recovery strategies—primarily speeding up (costing cubic fuel) or skipping ports (incurring penalties). Operators need intelligent systems to balance these dynamic trade-offs. The core objective of this project is to build a hybrid framework bridging deterministic MILP optimization and predictive ML, delivering an interactive decision-support dashboard.
+
+\section*{2. Challenges and Simulation Strategy}
+\addcontentsline{toc}{section}{2. Challenges and Simulation Strategy}
+Initially, we planned to use raw Automatic Identification System (AIS) data. However, historical data only reflects final decisions, lacking the "what-if" counterfactuals required to train ML models on optimal trade-offs. To bypass this, we pivoted to a simulation-first approach, modeling THE ALLIANCE FP1 service (10-vessel fleet, 14,000 TEU). This generated thousands of disruption scenarios, calculating exact fuel and delay costs for every possible recovery action based on empirical parameters from literature.
+
+\section*{3. Methodology and Progress}
+\addcontentsline{toc}{section}{3. Methodology and Progress}
+\textbf{The Optimization Layer (MILP):} We implemented an exact algorithm based on Brouer et al. (2013). Using SciPy's Sequential Least Squares Programming (SLSQP), we minimized fuel costs, linear delay penalties, and fixed skip penalties over 6,000 scenarios to generate a ground-truth labeled dataset. 
+
+\textbf{Machine Learning Integration:} We trained an XGBoost binary classifier on this dataset to predict port skips based on delay hours and queue length. The model achieved a baseline accuracy of 76.2\%. Analysis revealed a natural class imbalance (71.2\% "No Skip" vs. 28.8\% "Skip"). This highly realistic distribution provides a solid baseline and direction for future model tuning (e.g., applying SMOTE or \texttt{scale\_pos\_weight}).
+
+\textbf{Interactive Dashboard:} To present the POC, we developed a Flask backend and a vanilla JavaScript frontend. The dashboard dynamically visualizes cost breakdowns, optimal speeds, Pareto frontiers, and live predictive probabilities for port skipping based on user-controlled disruption inputs.
+
+\section*{4. Conclusion and Future Scope}
+\addcontentsline{toc}{section}{4. Conclusion and Future Scope}
+The mid-term objectives have been successfully met, demonstrating a functional pipeline from data generation and mathematical optimization to ML classification and visualization. Moving forward into the final thesis, we will focus on:
+1) Addressing the ML class imbalance using advanced sampling techniques.
+2) Constructing a robust data pipeline to ingest and validate against raw NOAA AIS data.
+3) Exploring Multi-Agent Reinforcement Learning for dynamic policy generation.
+
+%----------------------------------------------------------------------------------------
+%   BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+\vspace{1cm}
+\renewcommand\refname{Bibliography}
+\addcontentsline{toc}{section}{Bibliography}
+
+\begin{thebibliography}{99}
+ 
+\bibitem{brouer2013}
+Brouer, B. D., Dirksen, J., Pisinger, D., Plum, C. E. M., \& Vaaben, B. (2013). The Vessel
+Schedule Recovery Problem (VSRP): A MIP model for handling disruptions in liner shipping.
+\textit{European Journal of Operational Research}, 224(2), 362--374.
+ 
+\bibitem{watanabe2024}
+Watanabe, E., Samanta, S., Kowatari, K., \& Shibasaki, R. (2024). On Vessel Schedule Delay and
+Its Recoveries in Liner Services Using AIS Data. In \textit{2024 IEEE International Conference
+on Big Data (BigData)} (pp. 6784--6794).
+ 
+\bibitem{kowatari2025}
+Kowatari, K., \& Shibasaki, R. (2025). Schedule Recovery Strategies in Container Liner Shipping
+Networks Using Multi-Agent Simulations. In \textit{2025 IEEE International Conference on Big
+Data (BigData)} (pp. 3719--3727).
+ 
+\bibitem{skiportnot2025}
+Skip or not: Hybrid machine learning for decision support in strategic port-skipping behavior to
+enhance liner shipping reliability. (2025). \textit{Ocean Engineering}.
+ 
+\bibitem{liqisong2016}
+Li, C., Qi, X., \& Song, D. (2016). Real-time schedule recovery in liner shipping service with
+regular uncertainties and disruption events. \textit{Transportation Research Part B:
+Methodological}, 93, 762--788.
+ 
+\bibitem{mulderdekker2019}
+Mulder, J., \& Dekker, R. (2019). Designing robust liner shipping schedules: Optimizing recovery
+actions and buffer times. \textit{European Journal of Operational Research}, 272(1), 132--146.
+ 
+\end{thebibliography}
+ 
+\end{document}

@@ -133,26 +133,43 @@ def baseline_cost(disruption_delay: float) -> Dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONTINUOUS SPEED OPTIMIZER  (SLSQP — Eq. from Brouer 2013 speed variables)
+# CONTINUOUS SPEED OPTIMIZER  (L-BFGS-B with multi-start — robust at large cost scales)
 # ─────────────────────────────────────────────────────────────────────────────
 def optimize_speeds(skips: List[int], disruption_delay: float) -> np.ndarray:
     """
     For a fixed skip set, find per-leg speeds minimising total cost.
-    Decision variables: v[0..N_LEGS-1] in [V_MIN, V_MAX]
-    Constraint: implicit (time budget — handled in residual_delay calculation)
+    Uses L-BFGS-B (more numerically stable than SLSQP at large cost magnitudes).
+    Tries two warm starts — fast (recover time) and slow (save fuel) — and
+    returns whichever yields the lower total cost.
     """
-    def objective(v):
-        return total_cost(v, skips, disruption_delay)["total"]
+    # Normalise objective to ~O(1) so gradient finite-differences stay accurate
+    # regardless of whether total cost is $1M or $100M.
+    scale = 1e7
 
-    v0     = np.full(N_LEGS, min(V_DEFAULT * 1.08, V_MAX))  # warm start: ~8% speedup
+    def objective(v):
+        return total_cost(v, skips, disruption_delay)["total"] / scale
+
     bounds = [(V_MIN, V_MAX)] * N_LEGS
 
-    result = minimize(
-        objective, v0, method="SLSQP",
-        bounds=bounds,
-        options={"ftol": 1e-8, "maxiter": 500, "disp": False}
-    )
-    return result.x if result.success else v0
+    best_x    = np.full(N_LEGS, V_DEFAULT)
+    best_cost = float("inf")
+
+    # Two warm starts: sprint to recover time, or crawl to save fuel
+    for v0 in [
+        np.full(N_LEGS, min(V_DEFAULT * 1.08, V_MAX)),   # fast start
+        np.full(N_LEGS, max(V_DEFAULT * 0.70, V_MIN)),   # slow start
+    ]:
+        res = minimize(
+            objective, v0, method="L-BFGS-B",
+            bounds=bounds,
+            options={"ftol": 1e-12, "gtol": 1e-8, "maxiter": 1000},
+        )
+        c = total_cost(res.x, skips, disruption_delay)["total"]
+        if c < best_cost:
+            best_cost = c
+            best_x    = res.x
+
+    return best_x
 
 
 # ─────────────────────────────────────────────────────────────────────────────

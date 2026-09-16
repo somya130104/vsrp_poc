@@ -311,27 +311,35 @@ class VSRPSimulation:
 # ─────────────────────────────────────────────────────────────────────────────
 def run_pareto_sweep(horizon: int = 2000) -> List[Dict]:
     """
-    Sweep (α, β) combinations and return delay–fuel Pareto data.
-    Kowatari used 25 combinations; we use 9 for speed.
+    Sweep (α, β) combinations and return delay-fuel Pareto data.
+    α (alpha): aggressiveness of speed-up when running late (higher = more fuel burned).
+    β (beta):  sensitivity to port queue congestion (higher = quicker to skip crowded ports).
+    Disruption fires at t=200 so all strategies face the same shock and diverge.
     """
-    alphas = [0.005, 0.03, 0.08]
-    betas  = [0.005, 0.03, 0.08]
+    # Wider range so strategies produce meaningfully different outcomes
+    alphas = [0.001, 0.005, 0.02, 0.06, 0.12]
+    betas  = [0.001, 0.01,  0.05]
     results = []
 
     print("Running Pareto sweep...")
     for a in alphas:
         for b in betas:
-            sim = VSRPSimulation(alpha=a, beta=b, horizon=horizon)
-            r   = sim.run()
+            sim = VSRPSimulation(
+                alpha=a, beta=b,
+                disruption_start=200,   # fire disruption early so all runs are affected
+                disruption_h_eff=0.45,  # realistic LA/LB 2021 efficiency
+                horizon=horizon
+            )
+            r = sim.run()
             results.append({
-                "alpha"    : a,
-                "beta"     : b,
-                "label"    : f"α={a}, β={b}",
-                "delay"    : r["avg_delay_hrs"],
-                "fuel"     : r["avg_fuel_ton_hr"],
-                "skips"    : r["total_skips"],
+                "alpha" : a,
+                "beta"  : b,
+                "label" : f"α={a}, β={b}",
+                "delay" : r["avg_delay_hrs"],
+                "fuel"  : r["avg_fuel_ton_hr"],
+                "skips" : r["total_skips"],
             })
-            print(f"  α={a:.3f} β={b:.3f} → delay={r['avg_delay_hrs']:.1f}h fuel={r['avg_fuel_ton_hr']:.3f} t/h skips={r['total_skips']}")
+            print(f"  α={a:.3f} β={b:.3f} → delay={r['avg_delay_hrs']:.1f}h fuel={r['avg_fuel_ton_hr']:.4f} t/h skips={r['total_skips']}")
 
     return results
 

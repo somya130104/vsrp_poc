@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,6 +10,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // Apply saved theme before first paint to avoid flash
+    (function(){
+      const t = localStorage.getItem('vsrp-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
 
@@ -20,10 +27,13 @@
       <div class="brand-name">VSRP</div>
       <div class="brand-sub">Vessel Schedule Recovery Problem</div>
     </div>
-    <div class="header-refs">
-      <span class="ref-tag">Brouer et al. · EJOR 2013</span>
-      <span class="ref-tag">Kowatari &amp; Shibasaki · IEEE BigData 2025</span>
-      <span class="ref-tag">Ocean Engineering · 2025</span>
+    <div class="header-right">
+      <div class="header-refs">
+        <span class="ref-tag">Brouer et al. · EJOR 2013</span>
+        <span class="ref-tag">Kowatari &amp; Shibasaki · IEEE BigData 2025</span>
+        <span class="ref-tag">Ocean Engineering · 2025</span>
+      </div>
+      <button id="themeToggle" title="Toggle light / dark mode" onclick="toggleTheme()">&#9680;</button>
     </div>
   </div>
 </header>
@@ -98,6 +108,8 @@
     <p class="section-desc">
       Mixed-Integer Linear Program minimising total voyage cost:
       fuel (cubic in speed) + port dues + delay penalty + cargo-rollover penalty.
+      After clicking Run Optimiser, the <strong>Port Call Decisions</strong> panel below the charts
+      will show exactly which specific ports the algorithm chooses to skip or call.
     </p>
     <div class="math-box">
       <p>
@@ -125,7 +137,7 @@
     <!-- Savings panel -->
     <div class="savings-panel" id="savingsPanel" style="display:none">
       <div class="label-mono" style="margin-bottom:8px">Cost Reduction vs. No Recovery</div>
-      <div class="savings-number" id="savingsNum">—</div>
+      <div class="savings-number" id="savingsNum">&mdash;</div>
       <div class="savings-caption">cost reduction vs. no recovery</div>
       <div class="savings-detail" id="savingsDetail"></div>
     </div>
@@ -135,54 +147,8 @@
   </div>
 </section>
 
-<!-- ── PARETO ─────────────────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Pareto Trade-off Analysis</span>
-    </div>
-    <h2 class="section-title">Delay vs. Fuel Cost — Kowatari &amp; Shibasaki (2025, Fig. 5)</h2>
-    <p class="section-desc">
-      Each point represents one (&alpha;, &beta;) strategy pair in the multi-agent simulation.
-      Points on the frontier are Pareto-efficient — no strategy can reduce delay without increasing fuel cost.
-      Reproduces Scenario S1 from Kowatari &amp; Shibasaki.
-    </p>
-    <div class="card mt-24">
-      <div class="card-title">Delay vs. Fuel Trade-off — Pareto Frontier</div>
-      <div class="placeholder" id="paretoPlaceholder">Running simulation sweep…</div>
-      <canvas id="paretoChart" style="display:none"></canvas>
-      <div class="chart-legend" id="paretoLegend" style="display:none">
-        <div class="legend-item">
-          <div class="legend-pip" style="background:#c9993e"></div>
-          Pareto frontier
-        </div>
-        <div class="legend-item">
-          <div class="legend-pip" style="background:rgba(147,180,210,0.7)"></div>
-          Dominated strategies
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- ── SKIP THRESHOLD ─────────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Skip Threshold Sensitivity</span>
-    </div>
-    <h2 class="section-title">Effect of T<sub style="font-size:0.65em">skip</sub> on Port Skips and Delay — Kowatari (2025, Scenario S2)</h2>
-    <p class="section-desc">
-      Equation 7: a vessel skips a port when accumulated delay d(t) &ge; T<sub>skip</sub>.
-      Higher thresholds reduce skips but allow more delay to accumulate in the system.
-    </p>
-    <div class="card mt-24">
-      <div class="card-title">Skip Threshold vs. System Outcomes</div>
-      <div class="placeholder" id="skipThreshPlaceholder">Loading…</div>
-      <canvas id="skipThreshChart" style="display:none"></canvas>
-    </div>
-  </div>
-</section>
+
 
 <!-- ── ML CLASSIFIER ─────────────────────────────────────────── -->
 <section class="page-section">
@@ -224,6 +190,7 @@
         <div class="pred-slider-group">
           <label>
             Anchorage Delay (hours)
+            <span class="pred-sub">Hours the vessel has been waiting at anchor outside the port</span>
             <strong id="p_delay_val">80</strong>
           </label>
           <input type="range" id="p_delay" min="0" max="200" value="80" oninput="updatePredictor()" />
@@ -231,6 +198,7 @@
         <div class="pred-slider-group">
           <label>
             Queue Length (vessels)
+            <span class="pred-sub">Number of ships currently waiting ahead in the anchorage queue</span>
             <strong id="p_queue_val">4</strong>
           </label>
           <input type="range" id="p_queue" min="0" max="20" value="4" oninput="updatePredictor()" />
@@ -238,6 +206,7 @@
         <div class="pred-slider-group">
           <label>
             Terminal Handling Efficiency
+            <span class="pred-sub">Port crane/berth throughput relative to normal capacity (1.0 = 100% normal, 0.4 = severe congestion like LA/LB 2021)</span>
             <strong id="p_heff_val">0.60</strong>
           </label>
           <input type="range" id="p_heff" min="0.3" max="1.0" value="0.6" step="0.05" oninput="updatePredictor()" />
@@ -245,6 +214,7 @@
         <div class="pred-slider-group">
           <label>
             Days Since Disruption Onset
+            <span class="pred-sub">How long the congestion event has been ongoing — longer disruptions mean more backed-up cargo and less chance of quick recovery</span>
             <strong id="p_days_val">20</strong>
           </label>
           <input type="range" id="p_days" min="0" max="90" value="20" oninput="updatePredictor()" />
@@ -268,75 +238,7 @@
   </div>
 </section>
 
-<!-- ── COMPARISON TABLE ───────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Method Comparison</span>
-    </div>
-    <h2 class="section-title">Three Paradigms — Evaluated Across Key Dimensions</h2>
-    <p class="section-desc">
-      From Module 2 of the research framework: exact optimisation vs. heuristic simulation vs. data-driven prediction.
-      Each approach offers a distinct trade-off between solution quality, scalability, and adaptability.
-    </p>
-    <div class="card mt-24">
-      <table class="comp-table">
-        <thead>
-          <tr>
-            <th>Dimension</th>
-            <th class="col-1">Pure MILP &nbsp;&middot;&nbsp; <small style="font-weight:400;opacity:0.7">Brouer 2013</small></th>
-            <th class="col-2">Multi-Agent Simulation &nbsp;&middot;&nbsp; <small style="font-weight:400;opacity:0.7">Kowatari 2025</small></th>
-            <th class="col-3">XGBoost Classifier &nbsp;&middot;&nbsp; <small style="font-weight:400;opacity:0.7">Ocean Eng. 2025</small></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Optimality guarantee</td>
-            <td class="txt-good">Global optimum</td>
-            <td class="txt-warn">Heuristic</td>
-            <td class="txt-warn">Data-driven approximation</td>
-          </tr>
-          <tr>
-            <td>Computational scalability</td>
-            <td class="txt-bad">Exponential (NP-hard)</td>
-            <td class="txt-good">Linear O(n · t)</td>
-            <td class="txt-good">Fast inference</td>
-          </tr>
-          <tr>
-            <td>Real-time adaptation</td>
-            <td class="txt-bad">Batch solve required</td>
-            <td class="txt-warn">Rule-based adjustment</td>
-            <td class="txt-good">Online prediction</td>
-          </tr>
-          <tr>
-            <td>Multi-service congestion</td>
-            <td class="txt-bad">Single vessel only</td>
-            <td class="txt-good">Network-wide endogenous</td>
-            <td class="txt-warn">Feature-level proxy</td>
-          </tr>
-          <tr>
-            <td>Fuel cost model</td>
-            <td class="txt-good">Cubic V³ (linearised)</td>
-            <td class="txt-good">Exact cubic — Eq. 10</td>
-            <td class="txt-warn">Implicit in features</td>
-          </tr>
-          <tr>
-            <td>Interpretability</td>
-            <td class="txt-good">Exact formulation</td>
-            <td class="txt-good">Transparent rule set</td>
-            <td class="txt-warn">SHAP analysis required</td>
-          </tr>
-          <tr>
-            <td>Thesis research gap</td>
-            <td>Speed-only, no cargo flow</td>
-            <td>Hard-coded heuristics</td>
-            <td>No schedule feedback loop</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+
 
 <!-- ── FOOTER ─────────────────────────────────────────────────── -->
 <footer class="footer">
@@ -357,6 +259,22 @@
   </div>
 </footer>
 
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('vsrp-theme', next);
+  // Reload the page so Chart.js canvases redraw with the new color palette
+  window.location.reload();
+}
+// Set correct icon on load
+document.addEventListener('DOMContentLoaded', function() {
+  const t = document.documentElement.getAttribute('data-theme');
+  document.getElementById('themeToggle').innerHTML = t === 'dark' ? '&#9680;' : '&#9788;';
+});
+</script>
 <script src="app.js"></script>
 </body>
 </html>

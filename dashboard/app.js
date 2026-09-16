@@ -1,27 +1,44 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    app.js — VSRP Dashboard
-   All Chart.js charts use the editorial dark palette.
+   Chart colors are resolved from CSS custom properties at render time so they
+   work correctly in both dark mode and light mode.
    ───────────────────────────────────────────────────────────────────────────── */
 
-// ── Chart.js global defaults ──────────────────────────────────────────────────
-Chart.defaults.color           = 'rgba(232,220,200,0.45)';
-Chart.defaults.borderColor     = 'rgba(255,255,255,0.07)';
-Chart.defaults.font.family     = "'Space Grotesk', system-ui, sans-serif";
-Chart.defaults.font.size       = 11;
+// ── Dynamic theme palette ─────────────────────────────────────────────────────
+// Reads the *computed* CSS variable values so dark/light mode is automatic.
+function getT() {
+  const s = getComputedStyle(document.documentElement);
+  const v = (name) => s.getPropertyValue(name).trim();
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
-// Palette
-const C = {
-  accent  : '#c2593a',
-  accentD : 'rgba(194,89,58,0.25)',
-  gold    : '#c9993e',
-  goldD   : 'rgba(201,153,62,0.20)',
-  jade    : '#4a9472',
-  jadeD   : 'rgba(74,148,114,0.15)',
-  steel   : 'rgba(147,180,210,0.75)',
-  steelD  : 'rgba(147,180,210,0.18)',
-  paper   : 'rgba(232,220,200,0.90)',
-  muted   : 'rgba(232,220,200,0.38)',
-};
+  return {
+    // Accent colours — same hue, slightly adjusted for readability per mode
+    accent  : isDark ? '#d4644a' : '#c2472a',
+    accentD : isDark ? 'rgba(212,100,74,0.22)' : 'rgba(194,71,42,0.14)',
+    gold    : isDark ? '#d4a84b' : '#b8851e',
+    goldD   : isDark ? 'rgba(212,168,75,0.20)' : 'rgba(184,133,30,0.14)',
+    jade    : isDark ? '#52a67e' : '#3a8560',
+    jadeD   : isDark ? 'rgba(82,166,126,0.18)' : 'rgba(58,133,96,0.12)',
+    steel   : isDark ? 'rgba(160,192,220,0.78)' : 'rgba(50,90,160,0.72)',
+    steelD  : isDark ? 'rgba(160,192,220,0.16)' : 'rgba(50,90,160,0.10)',
+    // Text colours — derived from CSS vars, fully correct per mode
+    text    : isDark ? 'rgba(240,232,216,0.82)' : 'rgba(26,20,16,0.80)',
+    muted   : isDark ? 'rgba(240,232,216,0.46)' : 'rgba(26,20,16,0.50)',
+    grid    : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)',
+    border  : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.10)',
+  };
+}
+
+// ── Apply Chart.js globals for current theme ──────────────────────────────────
+function applyChartDefaults() {
+  const T = getT();
+  Chart.defaults.color       = T.muted;
+  Chart.defaults.borderColor = T.grid;
+  Chart.defaults.font.family = "'Space Grotesk', system-ui, sans-serif";
+  Chart.defaults.font.size   = 11;
+}
+applyChartDefaults();
+
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let routeMeta       = null;
@@ -132,6 +149,7 @@ async function runOptimizer() {
 
 function renderOptimizer(r) {
   const costs = r.costs;
+  const T = getT();
 
   // ── Cost chart ──────────────────────────────────────────────────────────────
   hide('costPlaceholder'); show('costChart');
@@ -145,16 +163,16 @@ function renderOptimizer(r) {
         {
           label: 'No Recovery',
           data: [costs.baseline.fuel, costs.baseline.port_fees, costs.baseline.delay, costs.baseline.skip_penalty],
-          backgroundColor: C.accentD,
-          borderColor: C.accent,
+          backgroundColor: T.accentD,
+          borderColor: T.accent,
           borderWidth: 1,
           borderRadius: 3,
         },
         {
           label: 'MILP Recovery',
           data: [costs.optimized.fuel, costs.optimized.port_fees, costs.optimized.delay, costs.optimized.skip_penalty],
-          backgroundColor: C.steelD,
-          borderColor: C.steel,
+          backgroundColor: T.steelD,
+          borderColor: T.steel,
           borderWidth: 1,
           borderRadius: 3,
         }
@@ -163,12 +181,12 @@ function renderOptimizer(r) {
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'top', labels: { color: C.muted, font: { size: 11 } } },
+        legend: { position: 'top', labels: { color: T.muted, font: { size: 11 } } },
         tooltip: { callbacks: { label: ctx => ` $${(ctx.raw/1000).toFixed(0)}K` } }
       },
       scales: {
-        y: { ticks: { callback: v => `$${(v/1000).toFixed(0)}K`, color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        x: { ticks: { color: C.muted }, grid: { display: false } }
+        y: { ticks: { callback: v => `$${(v/1000).toFixed(0)}K`, color: T.text }, grid: { color: T.grid } },
+        x: { ticks: { color: T.text }, grid: { display: false } }
       }
     }
   });
@@ -193,7 +211,7 @@ function renderOptimizer(r) {
           label: 'Design Speed',
           data: r.optimal_speeds.map(() => defSpeed),
           type: 'line',
-          borderColor: C.muted,
+          borderColor: T.muted,
           borderDash: [4, 3],
           borderWidth: 1.5,
           pointRadius: 0,
@@ -203,8 +221,8 @@ function renderOptimizer(r) {
         {
           label: 'Optimal Speed',
           data: r.optimal_speeds,
-          backgroundColor: r.optimal_speeds.map(v => v > defSpeed + 1 ? C.accentD : C.goldD),
-          borderColor: r.optimal_speeds.map(v => v > defSpeed + 1 ? C.accent : C.gold),
+          backgroundColor: r.optimal_speeds.map(v => v > defSpeed + 1 ? T.accentD : T.goldD),
+          borderColor: r.optimal_speeds.map(v => v > defSpeed + 1 ? T.accent : T.gold),
           borderWidth: 1,
           borderRadius: 3,
         }
@@ -213,12 +231,12 @@ function renderOptimizer(r) {
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'top', labels: { color: C.muted, font: { size: 11 } } },
+        legend: { position: 'top', labels: { color: T.muted, font: { size: 11 } } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)} kn` } }
       },
       scales: {
-        y: { min: 8, max: 26, ticks: { callback: v => `${v}`, color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        x: { ticks: { color: C.muted, maxRotation: 30, font: { size: 9 } }, grid: { display: false } }
+        y: { min: 8, max: 26, ticks: { callback: v => `${v}`, color: T.text }, grid: { color: T.grid } },
+        x: { ticks: { color: T.text, maxRotation: 30, font: { size: 9 } }, grid: { display: false } }
       }
     }
   });
@@ -228,7 +246,7 @@ function renderOptimizer(r) {
   setText('savingsNum', `${r.savings_pct}%`);
   setText('savingsDetail',
     `Baseline: $${(costs.baseline.total/1000).toFixed(0)}K  →  Optimised: $${(costs.optimized.total/1000).toFixed(0)}K` +
-    ` · Residual delay: ${r.total_delay_hrs} h · Ports skipped: ${r.n_skips}`
+    ` · Ports skipped: ${r.n_skips}`
   );
 
   // ── Skip decisions ──────────────────────────────────────────────────────────
@@ -252,131 +270,6 @@ function renderOptimizer(r) {
   }
 }
 
-// ── PARETO ────────────────────────────────────────────────────────────────────
-async function loadPareto() {
-  setStatus('Running Pareto simulation sweep…');
-  try {
-    const data = await api('/api/pareto');
-    renderPareto(data);
-    setStatus('Dashboard ready', true);
-  } catch (e) {
-    setText('paretoPlaceholder', 'Error: ' + e.message);
-  }
-}
-
-function renderPareto(points) {
-  hide('paretoPlaceholder'); show('paretoChart'); show('paretoLegend');
-  if (paretoChartInst) paretoChartInst.destroy();
-
-  // Identify Pareto-efficient (non-dominated)
-  const dominated = new Set();
-  for (let i = 0; i < points.length; i++) {
-    for (let j = 0; j < points.length; j++) {
-      if (i !== j && points[j].fuel <= points[i].fuel && points[j].delay <= points[i].delay && j !== i) {
-        dominated.add(i);
-      }
-    }
-  }
-
-  const frontier  = points.filter((_, i) => !dominated.has(i)).map(p => ({ x: p.fuel * 10, y: p.delay, label: p.label }));
-  const dominated2= points.filter((_, i) =>  dominated.has(i)).map(p => ({ x: p.fuel * 10, y: p.delay, label: p.label }));
-
-  paretoChartInst = new Chart(document.getElementById('paretoChart'), {
-    type: 'scatter',
-    data: {
-      datasets: [
-        {
-          label: 'Dominated strategies',
-          data: dominated2,
-          backgroundColor: C.steelD,
-          borderColor: C.steel,
-          pointRadius: 8,
-          pointHoverRadius: 11,
-        },
-        {
-          label: 'Pareto frontier',
-          data: frontier,
-          backgroundColor: C.goldD,
-          borderColor: C.gold,
-          pointRadius: 11,
-          pointHoverRadius: 14,
-          pointStyle: 'circle',
-          borderWidth: 2,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const p = ctx.raw;
-              return [`Strategy: ${p.label || 'unknown'}`, `Fuel index: ${p.x.toFixed(0)}`, `Avg delay: ${p.y.toFixed(1)} hrs`];
-            }
-          }
-        }
-      },
-      scales: {
-        x: { title: { display: true, text: 'Relative Fuel Cost (index)', color: C.muted }, ticks: { color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { title: { display: true, text: 'Average Delay (hrs)', color: C.muted }, ticks: { color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } }
-      }
-    }
-  });
-}
-
-// ── SKIP THRESHOLD ────────────────────────────────────────────────────────────
-async function loadSkipThreshold() {
-  try {
-    const data = await api('/api/skip_threshold');
-    renderSkipThreshold(data);
-  } catch (e) {
-    setText('skipThreshPlaceholder', 'Error loading');
-  }
-}
-
-function renderSkipThreshold(data) {
-  hide('skipThreshPlaceholder'); show('skipThreshChart');
-  if (skipThChartInst) skipThChartInst.destroy();
-
-  skipThChartInst = new Chart(document.getElementById('skipThreshChart'), {
-    type: 'bar',
-    data: {
-      labels: data.map(d => `T = ${d.t_skip} h`),
-      datasets: [
-        {
-          label: 'Port Skips',
-          data: data.map(d => d.skips),
-          backgroundColor: C.accentD,
-          borderColor: C.accent,
-          borderWidth: 1,
-          borderRadius: 3,
-          yAxisID: 'y',
-        },
-        {
-          label: 'Average Delay (hrs)',
-          data: data.map(d => d.delay),
-          backgroundColor: C.steelD,
-          borderColor: C.steel,
-          borderWidth: 1,
-          borderRadius: 3,
-          yAxisID: 'y1',
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top', labels: { color: C.muted } },
-      },
-      scales: {
-        y  : { title: { display: true, text: 'Port Skips', color: C.muted }, position: 'left', ticks: { color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y1 : { title: { display: true, text: 'Avg Delay (hrs)', color: C.muted }, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: C.muted } }
-      }
-    }
-  });
-}
 
 // ── ML RESULTS ────────────────────────────────────────────────────────────────
 async function loadMLResults() {
@@ -415,6 +308,7 @@ function renderML(data) {
   // Feature importance bar chart
   hide('featPlaceholder'); show('featChart');
   if (featChartInst) featChartInst.destroy();
+  const T = getT();
 
   const feats  = Object.keys(data.feature_importances);
   const values = Object.values(data.feature_importances);
@@ -427,10 +321,10 @@ function renderML(data) {
         label: 'Importance',
         data: values,
         backgroundColor: values.map((v, i) =>
-          i === 0 ? C.accentD : i === 1 ? C.goldD : C.steelD
+          i === 0 ? T.accentD : i === 1 ? T.goldD : T.steelD
         ),
         borderColor: values.map((v, i) =>
-          i === 0 ? C.accent : i === 1 ? C.gold : C.steel
+          i === 0 ? T.accent : i === 1 ? T.gold : T.steel
         ),
         borderWidth: 1,
         borderRadius: 3,
@@ -441,8 +335,8 @@ function renderML(data) {
       responsive: true,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: C.muted }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { ticks: { color: C.muted, font: { size: 10 } }, grid: { display: false } }
+        x: { ticks: { color: T.text }, grid: { color: T.grid } },
+        y: { ticks: { color: T.text, font: { size: 10 } }, grid: { display: false } }
       }
     }
   });
@@ -475,7 +369,8 @@ function updatePredictor() {
       setText('probValue', pct + '%');
 
       const probEl = document.getElementById('probValue');
-      probEl.style.color = prob > 0.7 ? C.accent : prob > 0.4 ? C.gold : C.jade;
+      const T2 = getT();
+      probEl.style.color = prob > 0.7 ? T2.accent : prob > 0.4 ? T2.gold : T2.jade;
 
       let verdict = 'Low risk — vessel likely to call port';
       if (prob > 0.7) verdict = 'High risk — vessel likely to skip port';
@@ -508,8 +403,6 @@ async function init() {
   }
 
   // Load async panels
-  loadPareto();
-  loadSkipThreshold();
   loadMLResults();
   updatePredictor();
 }
