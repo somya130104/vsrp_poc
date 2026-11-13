@@ -4,3 +4,9 @@ __pycache__/
 venv/
 .env
 .vercel
+
+# raw Maersk schedule files stay private; the site uses the processed data/real/ files
+TP7_TP8 Vessel Data/
+# synthetic data is not part of the real-only pipeline
+data/real/synthetic*
+data/real/synthetic_calls.csv

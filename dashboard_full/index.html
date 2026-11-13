@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VSRP · Transpacific Recovery</title>
+  <meta name="description" content="Vessel Schedule Recovery on real Maersk TP8 and TP7 schedules: exact MILP optimisation, replay against real decisions, and a machine-learning recovery advisor." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('vsrp-theme');
+        var s = localStorage.getItem('vsrp-size');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+        if (s) document.documentElement.setAttribute('data-size', s);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ───────────────────────── TOP BAR ───────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="mark" href="#top" aria-label="VSRP home">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+        <circle cx="16" cy="16" r="14.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M6 19 Q16 9 26 19" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="6" cy="19" r="2.2" fill="currentColor"/><circle cx="26" cy="19" r="2.2" fill="var(--accent)"/>
+      </svg>
+      <span class="mark-text">VSRP<span class="mark-sub">Transpacific recovery study</span></span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#voyages">Real voyages</a>
+      <a href="#recover">Recover</a>
+      <a href="#replay">Model vs Maersk</a>
+      <a href="#ml">Machine learning</a>
+      <a href="#method">Method</a>
+    </nav>
+    <div class="tools">
+      <button class="tool" id="sizeToggle" title="Larger type for projectors" aria-pressed="false">
+        <span class="tool-a">A</span><span class="tool-A">A</span>
+      </button>
+      <button class="tool" id="themeToggle" title="Switch Paper / Night theme" aria-label="Switch theme">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9A7 7 0 0 1 12 3z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ───────────────────────── HERO ───────────────────────── -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="kicker">M.Tech project · IIT Kharagpur · Industrial &amp; Systems Engineering</p>
+        <h1>When the berth is not ready,<br/>what should the ship do?</h1>
+        <p class="lede">
+          A schedule recovery model for container liners, built on <strong>real Maersk schedules</strong> for the
+          TP8 and TP7 transpacific services. Each late vessel gets an exact optimisation of
+          speed, port omission and berth handling. We check it against the decisions Maersk actually made,
+          then train a model that recommends the same recovery in milliseconds.
+        </p>
+        <div class="seg" role="tablist" aria-label="Service" id="serviceSeg">
+          <button role="tab" data-svc="TP8" class="on">TP8</button>
+          <button role="tab" data-svc="TP7">TP7</button>
+        </div>
+        <p class="rotation" id="rotationText"></p>
+      </div>
+      <div class="hero-map card card-flush">
+        <div id="map" class="map" aria-label="Map of the selected service route"></div>
+        <div class="map-legend">
+          <span><i class="lg-line"></i>Service rotation (searoute)</span>
+          <span><i class="lg-dash"></i>Port omitted at least once</span>
+          <span><i class="lg-dot"></i>Mean lateness at port</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 01 REAL VOYAGES ───────────────────────── -->
+<section class="sec" id="voyages">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">01</span>
+      <div>
+        <h2>What really happened on the water</h2>
+        <p class="sec-lede">Planned, estimated and actual timestamps for every completed call, June to October 2026. Lateness means actual arrival minus planned arrival.</p>
+      </div>
+    </header>
+
+    <div class="grid g-2-1">
+      <article class="card">
+        <h3>Lateness at every call, by vessel</h3>
+        <p class="note">Shanghai is where the delay builds. It then carries across the Pacific and shrinks slowly.</p>
+        <div class="chart h-360"><canvas id="cLateness"></canvas></div>
+      </article>
+      <article class="card">
+        <h3>Where delay is created</h3>
+        <p class="note">Mean arrival lateness per port in rotation order. Dots are single calls.</p>
+        <div class="chart h-360"><canvas id="cPorts"></canvas></div>
+      </article>
+    </div>
+
+    <div class="grid g-1-1">
+      <article class="card">
+        <h3>Pacific crossings beat the plan</h3>
+        <p class="note">Planned and actual sailing hours on each eastbound crossing to Los Angeles. The gap is time won back by sailing faster.</p>
+        <div class="chart h-300"><canvas id="cPacific"></canvas></div>
+      </article>
+      <article class="card story" id="omissionStory"></article>
+    </div>
+
+    <details class="card table-card">
+      <summary><span>All port calls</span><span class="summary-hint">table view · <span id="callCount"></span> rows</span></summary>
+      <div class="table-tools">
+        <label>Vessel <select id="callVessel"></select></label>
+      </div>
+      <div class="table-scroll"><table class="data" id="callTable"></table></div>
+    </details>
+  </div>
+</section>
+
+<!-- ───────────────────────── 02 RECOVER ───────────────────────── -->
+<section class="sec sec-alt" id="recover">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">02</span>
+      <div>
+        <h2>Recover a late voyage</h2>
+        <p class="sec-lede">Set where the ship is and how late it is. The MILP gives the cheapest mix of speed, port omission and faster handling over the next loop, and compares it with three other strategies. All five strategies use the same cost model.</p>
+      </div>
+    </header>
+
+    <div class="recover">
+      <aside class="panel" id="controls">
+        <div class="presets">
+          <span class="panel-label">Start from a real situation</span>
+          <div class="chips" id="presets"></div>
+        </div>
+
+        <div class="ctl">
+          <label for="startPort">Vessel has just left</label>
+          <select id="startPort"></select>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label for="delay">Departure delay</label><output id="delayOut">150 h</output></div>
+          <input type="range" id="delay" min="0" max="450" step="6" value="150" />
+        </div>
+        <div class="ctl">
+          <label for="congPort">Congested port ahead</label>
+          <select id="congPort"></select>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label for="congH">Berth available after plan</label><output id="congOut">0 h</output></div>
+          <input type="range" id="congH" min="0" max="450" step="6" value="0" />
+        </div>
+
+        <div class="ctl-group">
+          <span class="panel-label">Recovery levers</span>
+          <label class="switch"><input type="checkbox" id="allowSkip" checked /><span></span>Allow port omission</label>
+          <label class="switch"><input type="checkbox" id="allowHandling" checked /><span></span>Allow faster berth handling</label>
+          <div class="ctl">
+            <span class="sub-label">Ports that must be called</span>
+            <div class="chips chips-toggle" id="mandatory"></div>
+          </div>
+        </div>
+
+        <div class="ctl-group">
+          <span class="panel-label">Cost assumptions <span class="tag tag-assumed">Assumed</span></span>
+          <div class="ctl">
+            <div class="ctl-row"><label for="bunker">Bunker price</label><output id="bunkerOut">$600 /t</output></div>
+            <input type="range" id="bunker" min="300" max="1000" step="10" value="600" />
+          </div>
+          <div class="ctl">
+            <div class="ctl-row"><label for="delayCost">Cargo delay cost</label><output id="delayCostOut">$20 /TEU·day</output></div>
+            <input type="range" id="delayCost" min="0" max="60" step="1" value="20" />
+          </div>
+          <div class="ctl">
+            <div class="ctl-row"><label for="rollover">Rollover cost of omitted cargo</label><output id="rolloverOut">$400 /TEU</output></div>
+            <input type="range" id="rollover" min="100" max="1500" step="25" value="400" />
+          </div>
+        </div>
+      </aside>
+
+      <div class="results">
+        <div class="verdict card card-hero" id="verdict"></div>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>The recovery plan, call by call</h3>
+            <div class="seg seg-sm" id="planSeg"></div>
+          </div>
+          <div class="voyage-strip" id="strip"></div>
+        </article>
+
+        <div class="grid g-1-1">
+          <article class="card">
+            <h3>Lateness at each call</h3>
+            <p class="note">Hours behind the planned berth time, by strategy.</p>
+            <div class="chart h-300"><canvas id="cPlanLate"></canvas></div>
+          </article>
+          <article class="card">
+            <h3>Where the money goes</h3>
+            <p class="note">Total recovery cost by component, in USD million.</p>
+            <div class="chart h-300"><canvas id="cPlanCost"></canvas></div>
+          </article>
+        </div>
+
+        <div class="grid g-1-1">
+          <article class="card">
+            <h3>Fuel versus lateness</h3>
+            <p class="note">Each point is the MILP solved again with a different weight on delay. The curve is the efficient frontier.</p>
+            <div class="chart h-300"><canvas id="cPareto"></canvas></div>
+          </article>
+          <article class="card">
+            <h3>What the ML advisor expects</h3>
+            <p class="note">Probability that each optional call is omitted, compared with the exact MILP decision.</p>
+            <div id="mlProbs" class="probs"></div>
+          </article>
+        </div>
+        <p class="solver" id="solverLine"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 03 REPLAY ───────────────────────── -->
+<section class="sec" id="replay">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">03</span>
+      <div>
+        <h2>Model versus Maersk</h2>
+        <p class="sec-lede">Every real departure that left 24 h or more late. The optimiser gets the real planned timetable and the berth availability we observed afterwards. That is hindsight, so read the gap as an upper bound on what recovery could have saved.</p>
+      </div>
+    </header>
+
+    <div class="replay-summary" id="replaySummary"></div>
+
+    <div class="replay">
+      <aside class="case-list" id="caseList" aria-label="Replay cases"></aside>
+      <div class="case-body">
+        <div class="case-title" id="caseTitle"></div>
+        <div class="grid g-1-1">
+          <article class="card">
+            <h3>Lateness along the next calls</h3>
+            <div class="chart h-320"><canvas id="cCaseLate"></canvas></div>
+          </article>
+          <article class="card">
+            <h3>Sailing speed per leg</h3>
+            <p class="note">Maersk's speed is the leg average, worked out from real timestamps and searoute distance.</p>
+            <div class="chart h-280"><canvas id="cCaseSpeed"></canvas></div>
+          </article>
+        </div>
+        <article class="card">
+          <h3>Cost of each course of action</h3>
+          <div class="table-scroll"><table class="data compare" id="caseTable"></table></div>
+          <p class="insight" id="caseInsight"></p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 04 ML ───────────────────────── -->
+<section class="sec sec-alt" id="ml">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">04</span>
+      <div>
+        <h2>Machine learning, used where it is honest</h2>
+        <p class="sec-lede">Real data has 52 sea legs and only three omitted calls, so a synthetic year for the whole fleet is generated from the real patterns. The delay predictor is still always tested on real ships, and the skip advisor learns from optimiser answers.</p>
+      </div>
+    </header>
+
+    <div class="grid g-1-1">
+      <article class="card">
+        <div class="card-head">
+          <h3>ML-1 · Next-port delay predictor</h3>
+          <span class="tag tag-real">Tested on real ships</span>
+        </div>
+        <p class="note">Six regression models on departure delay, planned leg time, schedule buffer and ports. Each is trained twice, on real legs only and on real + synthetic legs, and always tested on a real ship it has never seen.</p>
+        <div class="tiles" id="dmTiles"></div>
+        <div class="chart h-320"><canvas id="cDelayModel"></canvas></div>
+        <div id="dmBoard" class="board" style="margin-top:16px"></div>
+      </article>
+      <article class="card">
+        <div class="card-head">
+          <h3>ML-2 · Recovery advisor</h3>
+          <span class="tag tag-sim">MILP-labelled</span>
+        </div>
+        <ol class="pipeline">
+          <li><span><b>Sample</b> thousands of situations from the real + synthetic delay and congestion patterns</span></li>
+          <li><span><b>Solve</b> each one exactly with the MILP</span></li>
+          <li><span><b>Learn</b> which calls the MILP omits: ten models, from logistic regression to XGBoost</span></li>
+          <li><span><b>Advise</b>: fix the skips, let a small MILP set the speeds</span></li>
+        </ol>
+        <div class="tiles" id="advTiles"></div>
+      </article>
+    </div>
+
+    <div class="grid g-1-1-1">
+      <article class="card">
+        <h3>Extra cost against the exact optimum</h3>
+        <p class="note">Held-out scenarios. Lower is better.</p>
+        <div class="chart h-280"><canvas id="cRegret"></canvas></div>
+      </article>
+      <article class="card">
+        <h3>What drives a skip</h3>
+        <p class="note">XGBoost gain share, top features.</p>
+        <div class="chart h-280"><canvas id="cImportance"></canvas></div>
+      </article>
+      <article class="card">
+        <h3>Confusion matrix</h3>
+        <p class="note">Held-out calls. Rows are the MILP truth, columns the prediction.</p>
+        <div id="confusion" class="confusion"></div>
+        <div id="modelCompare" class="mini-compare"></div>
+      </article>
+    </div>
+
+    <div class="grid g-3-2 ml-extra">
+      <article class="card">
+        <div class="card-head">
+          <h3>Ten models compared on the same held-out scenarios</h3>
+          <span class="tag tag-sim">MILP-labelled</span>
+        </div>
+        <p class="note">Each model predicts which calls to omit, then a small MILP sets the speeds. Ranked by the extra cost against the exact MILP optimum, which is what matters for the shipping line.</p>
+        <div id="leaderboard" class="board"></div>
+      </article>
+      <article class="card">
+        <div class="card-head">
+          <h3>Where the training data comes from</h3>
+          <span class="tag tag-sim">Synthetic</span>
+        </div>
+        <p class="note">The real files hold 6 ships over 5 months. One full year is simulated for the whole fleet, using the real delay, berth-congestion, speed-recovery and port-stay patterns. The real data itself is left untouched.</p>
+        <div class="tiles" id="synTiles"></div>
+        <div class="chart h-300"><canvas id="cSynth"></canvas></div>
+        <p class="note" id="synNote" style="margin:10px 0 0"></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 05 METHOD ───────────────────────── -->
+<section class="sec" id="method">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">05</span>
+      <div>
+        <h2>Method and data provenance</h2>
+        <p class="sec-lede">Every number on this page is tagged by where it comes from. Assumed values are exposed as sliders and stress-tested.</p>
+      </div>
+    </header>
+
+    <div class="grid g-3-2">
+      <article class="card formula">
+        <h3>The optimisation model</h3>
+        <p class="note">A sailing-option network in the style of Brouer et al. (2013), for one vessel, over the next loop of calls.</p>
+        <div id="formula"></div>
+        <dl class="defs" id="formulaDefs"></dl>
+      </article>
+      <article class="card">
+        <h3>Where each input comes from</h3>
+        <div class="table-scroll"><table class="data prov" id="provTable"></table></div>
+      </article>
+    </div>
+
+    <div class="grid g-1-1">
+      <article class="card">
+        <h3>Route closest to the base papers</h3>
+        <div class="table-scroll"><table class="data" id="routeCompare"></table></div>
+      </article>
+      <article class="card">
+        <h3>Next steps for the final thesis</h3>
+        <ul class="steps">
+          <li>Collect schedules for the remaining fleet: about 3 more TP8 and about 5 more TP7 vessels, over 12 months.</li>
+          <li>Verify vessel TEU and design speed (Equasis) and replace the assumed fuel curve with the vessels' own curves.</li>
+          <li>Add AIS speed tracks to separate anchorage waiting from slow steaming.</li>
+          <li>Calibrate rollover and delay costs with the supervisor, or recover them from Maersk's revealed choices.</li>
+          <li>Extend from one vessel to the whole service, since berth slots are shared between vessels.</li>
+        </ul>
+      </article>
+    </div>
+
+    <article class="card refs">
+      <h3>References</h3>
+      <ol>
+        <li>Brouer, B. D., Dirksen, J., Pisinger, D., Plum, C. E. M., &amp; Vaaben, B. (2013). The Vessel Schedule Recovery Problem (VSRP): A MIP model for handling disruptions in liner shipping. <em>European Journal of Operational Research</em>, 224(2), 362–374.</li>
+        <li>Watanabe, E., Samanta, S., Kowatari, K., &amp; Shibasaki, R. (2024). On vessel schedule delay and its recoveries in liner services using AIS data. <em>IEEE BigData 2024</em>, 6784–6794.</li>
+        <li>Kowatari, K., &amp; Shibasaki, R. (2025). Schedule recovery strategies in container liner shipping networks using multi-agent simulations. <em>IEEE BigData 2025</em>, 3719–3727.</li>
+        <li>Li, C., Qi, X., &amp; Song, D. (2016). Real-time schedule recovery in liner shipping service with regular uncertainties and disruption events. <em>Transportation Research Part B</em>, 93, 762–788.</li>
+        <li>Mulder, J., &amp; Dekker, R. (2019). Designing robust liner shipping schedules: Optimizing recovery actions and buffer times. <em>European Journal of Operational Research</em>, 272(1), 132–146.</li>
+        <li>Skip or not: Hybrid machine learning for decision support in strategic port-skipping behavior (2025). <em>Ocean Engineering</em>.</li>
+      </ol>
+    </article>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div>
+      <div class="foot-title">Vessel Schedule Recovery Problem</div>
+      <div class="foot-sub">Somya Bhadada · Roll No. 22MF3IM24 · IIT Kharagpur</div>
+    </div>
+    <div class="foot-meta" id="footMeta"></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

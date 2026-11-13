@@ -1,61 +1,55 @@
-# Vessel Schedule Recovery Problem (VSRP) — Proof of Concept
+# Vessel Schedule Recovery Problem (VSRP): real Maersk TP8 / TP7 data
 
-This repository contains an interactive proof-of-concept (POC) dashboard for the **Vessel Schedule Recovery Problem (VSRP)**. It models how container liner shipping services (like THE ALLIANCE FP1) can recover from severe port congestion using a mix of traditional operations research, multi-agent simulation, and machine learning.
+This is a decision-support dashboard for **vessel schedule recovery** in container liner shipping. It is built on real Maersk vessel schedules (planned, estimated and actual timestamps) for the **TP8** and **TP7** transpacific services. TP7 shares 4 of its 5 ports with THE Alliance FP1 rotation used in the base papers. TP8 shares 3 of 6, and it has the richest data: 5 vessels, Shanghai congestion of up to 396 h, and two real omitted calls.
 
-The POC was built as a preliminary model to bridge the gap between deterministic optimization and predictive recovery strategies.
+## What it does
 
-## Theoretical Framework
+| Layer | What | Data |
+|---|---|---|
+| Real-data pipeline | Parses every port call, sea leg and omitted call. Works out the planned timetable, schedule buffers and berth waiting | **Real** |
+| Exact optimisation | One-vessel MILP over the next loop: speed per leg, port omission, berth handling. Uses a Brouer et al. (2013) sailing network with the cubic fuel curve linearised by perspective tangent cuts. Solved by HiGHS in about 10–60 ms | Real timetable + assumed costs |
+| Model vs Maersk | 21 real late departures replayed. The real decision is priced against no recovery, the speed-only MILP and the full MILP (with hindsight on berth availability) | **Real** |
+| Synthetic year | One full year (Nov 2025 – Oct 2026) for the whole fleet (8 TP8 + 6 TP7 ships), simulated from the real berth-congestion, speed-recovery, port-stay and omission patterns, and checked port by port against the real data (`data/real/synthetic_calls.csv`) | Synthetic, calibrated on real |
+| ML-1 delay predictor | Six regressors (ridge, k-NN, random forest, gradient boosting, XGBoost, MLP) for next-port lateness. Each is trained on real legs only and on real + synthetic legs, and always tested leave-one-real-vessel-out against a naive forecast | Tested on **real** |
+| ML-2 recovery advisor | 3,000 scenarios sampled from the real + synthetic delay and congestion patterns, solved by the MILP. Ten classifiers (logistic, naive Bayes, k-NN, decision tree, SVM, MLP, random forest, extra trees, sklearn gradient boosting, XGBoost) learn which calls to omit, and are ranked by regret, the extra cost versus the exact optimum | Simulated from real distributions |
 
-The implementation is grounded in three core paradigms from recent maritime logistics literature:
+Every input is tagged **Real / Derived / Public / Assumed / Simulated** on the Method section of the dashboard.
 
-1. **Exact Optimization (MILP):** Implements the objective function from Brouer et al. (EJOR 2013) to find the globally optimal trade-off between vessel speed-up (cubic fuel costs) and port skipping penalties.
-2. **Multi-Agent Simulation:** Replicates the heuristic recovery strategies and Pareto frontiers from Kowatari & Shibasaki (IEEE BigData 2025).
-3. **Data-Driven Prediction (ML):** Uses an XGBoost classifier inspired by Ocean Engineering (2025) to predict port skip probabilities in real-time based on congestion and vessel parameters.
-
-## Architecture & Workflow
-
-The system is built with a Python backend (Flask + SciPy SLSQP + XGBoost) and a vanilla HTML/JS frontend. Data generation is currently calibrated to synthetic empirical parameters (Watanabe et al. 2024), but the pipeline is designed to ingest real AIS data in future iterations.
-
-```mermaid
-graph TD
-    A[(Synthetic/AIS Data Generator)] --> B(Base Route & Parameters)
-    A --> C(Disruption Events)
-    
-    B --> D{Recovery Engine}
-    C --> D
-    
-    D -->|MILP / SciPy SLSQP| E[Brouer 2013 Model<br/>Speed & Skip Decisions]
-    D -->|Heuristics| F[Kowatari 2025 Model<br/>Pareto Delay vs Fuel]
-    D -->|Training Data| G[XGBoost Classifier<br/>Real-time Skip Predictor]
-    
-    E --> H[Flask API Backend]
-    F --> H
-    G --> H
-    
-    H --> I[Interactive Dashboard<br/>localhost:5050]
-```
-
-## Quick Start
-
-You'll need Python 3.9+ installed. The launch script will automatically handle dependencies, pre-compute the simulation sweeps, and spin up the dashboard.
+## Run
 
 ```bash
-# Clone the repository
-git clone https://github.com/somya130104/vsrp_poc.git
-cd vsrp_poc
-
-# Launch the full pipeline
-bash start.sh
+bash start.sh          # installs deps, runs build.py once (~2 min), serves http://localhost:5050
 ```
 
-Navigate to `http://localhost:5050` in your browser.
+Or step by step:
 
-## Repository Structure
+```bash
+pip install -r requirements.txt
+python build.py        # writes data/real/*.json  (python build.py --quick for a fast dev build)
+python app.py
+```
 
-* `src/data_generator.py` - Synthetic routing and congestion data creation.
-* `src/vsrp_optimizer.py` - Scipy-based SLSQP solver for the Brouer 2013 formulation.
-* `src/simulation_agent.py` - Multi-agent heuristics replicating Kowatari 2025.
-* `src/ml_classifier.py` - XGBoost model for binary port-skip classification.
-* `app.py` - Flask server exposing the model endpoints.
-* `dashboard/` - Frontend UI assets (HTML, CSS, JS).
-* `data/` - Generated JSON/CSV outputs (created on first run).
+## Layout
+
+```
+TP7_TP8 Vessel Data/   raw Maersk schedule files (JSON + XLSX)
+src/routes.py          services, ports, parameters + provenance, fuel curve, searoute distances
+src/real_data.py       parser: calls, legs, omitted calls, proforma timetable, port statistics
+src/recovery.py        scenario builder, cost evaluator, MILP, rule-based heuristic, Pareto sweep
+src/milp.py            small modelling layer over scipy.optimize.milp (HiGHS)
+src/replay.py          model-vs-Maersk replays of real decision points
+src/synthetic.py       synthetic fleet-year generator, calibrated on and validated against the real data
+src/ml_models.py       ML-1 delay predictor, ML-2 recovery advisor (scenario sampling, 10 classifiers, regret)
+build.py               runs the whole pipeline → data/real/
+app.py                 Flask API (+ static dashboard)
+dashboard/             HTML / CSS / JS (Chart.js, d3 map, KaTeX)
+legacy/                the first synthetic-data POC, kept for reference
+```
+
+## API
+
+`/api/overview` · `/api/real` · `/api/replays` · `/api/ml` · `/api/optimize?service=TP8&start=CNSHA&delay=150&cong_port=&cong_h=0&bunker=600&delay_cost=20&rollover=400&skip=1&handling=1&mandatory=USLAX` · `/api/pareto?…`
+
+## Note on the legacy POC
+
+The first POC (`legacy/`) used the Kowatari fuel formula `δ·√(10·TEU)·v³` as tonnes per **hour**. The formula gives tonnes per **day**, so fuel cost there is overstated about 24 times. The new model fixes this.

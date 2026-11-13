@@ -1,8 +1,8 @@
 Flask
 flask-cors
 numpy
-pandas
+scipy>=1.9
 scikit-learn
-scipy
 xgboost
 gunicorn
+searoute

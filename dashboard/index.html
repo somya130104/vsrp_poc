@@ -1,280 +1,264 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VSRP — Vessel Schedule Recovery Problem</title>
-  <meta name="description" content="Interactive proof-of-concept for the Vessel Schedule Recovery Problem in container liner shipping, combining MILP optimisation, multi-agent simulation, and machine learning." />
+  <title>VSRP · Vessel Schedule Recovery</title>
+  <meta name="description" content="Vessel Schedule Recovery Problem on the Maersk TP8 and TP7 transpacific services: MILP optimisation, XGBoost skip prediction and a live lateness predictor." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <link rel="stylesheet" href="style.css" />
   <script>
-    // Apply saved theme before first paint to avoid flash
-    (function(){
-      const t = localStorage.getItem('vsrp-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', t);
+    (function () {
+      try {
+        var t = localStorage.getItem('vsrp-theme');
+        var s = localStorage.getItem('vsrp-size');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+        if (s) document.documentElement.setAttribute('data-size', s);
+      } catch (e) {}
     })();
   </script>
 </head>
 <body>
 
 <!-- ── HEADER ─────────────────────────────────────────────────── -->
-<header class="header">
-  <div class="container header-inner">
-    <div class="brand">
-      <div class="brand-name">VSRP</div>
-      <div class="brand-sub">Vessel Schedule Recovery Problem</div>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="mark" href="#top" aria-label="VSRP home">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+        <circle cx="16" cy="16" r="14.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M6 19 Q16 9 26 19" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="6" cy="19" r="2.2" fill="currentColor"/><circle cx="26" cy="19" r="2.2" fill="var(--accent)"/>
+      </svg>
+      <span class="mark-text">VSRP<span class="mark-sub">Vessel Schedule Recovery Problem</span></span>
+    </a>
+    <div class="refs">
+      <span class="ref-tag">Brouer et al. · EJOR 2013</span>
+      <span class="ref-tag">Kowatari &amp; Shibasaki · 2025</span>
+      <span class="ref-tag">Ocean Engineering · 2025</span>
     </div>
-    <div class="header-right">
-      <div class="header-refs">
-        <span class="ref-tag">Brouer et al. · EJOR 2013</span>
-        <span class="ref-tag">Kowatari &amp; Shibasaki · IEEE BigData 2025</span>
-        <span class="ref-tag">Ocean Engineering · 2025</span>
-      </div>
-      <button id="themeToggle" title="Toggle light / dark mode" onclick="toggleTheme()">&#9680;</button>
+    <div class="tools">
+      <a class="tool tool-link" href="/full/" title="Full version with real voyages, replay and method">Full</a>
+      <button class="tool" id="sizeToggle" title="Larger type for projectors" aria-pressed="false">
+        <span class="tool-a">A</span><span class="tool-A">A</span>
+      </button>
+      <button class="tool" id="themeToggle" title="Switch light / dark" aria-label="Switch theme">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9A7 7 0 0 1 12 3z" fill="currentColor"/></svg>
+      </button>
     </div>
   </div>
 </header>
 
 <!-- ── STATUS BAR ─────────────────────────────────────────────── -->
 <div class="status-bar">
-  <div class="status-pip loading" id="statusPip"></div>
-  <span class="status-text" id="statusText">Initialising models and loading route data…</span>
+  <div class="wrap status-inner">
+    <span class="status-pip loading" id="statusPip"></span>
+    <span id="statusText">Loading route data and models…</span>
+  </div>
 </div>
 
-<!-- ── ROUTE ──────────────────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Trans-Pacific Service Route</span>
+<main id="top">
+
+<!-- ── 1 · ROUTE ─────────────────────────────────────────────── -->
+<section class="sec" id="route">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">01</span>
+      <div>
+        <h2>The service route</h2>
+        <p class="sec-lede">Maersk's transpacific liner services, read from the TP7 / TP8 schedule files. Ports marked orange were, on average, more than four days late in the schedules.</p>
+      </div>
+    </header>
+    <div class="seg" role="tablist" aria-label="Service" id="serviceSeg">
+      <button role="tab" data-svc="TP8" class="on">TP8</button>
+      <button role="tab" data-svc="TP7">TP7</button>
     </div>
-    <h2 class="section-title">THE ALLIANCE FP1 Pendulum Service</h2>
-    <p class="section-desc">
-      Ten-vessel weekly liner service · 12,313 nautical miles ·
-      Based on Watanabe et al. (2024) empirical parameters.
-      <strong>Ports marked in terracotta experienced congestion during the 2021 LA/LB disruption.</strong>
-    </p>
-    <div class="route-wrap">
+    <div class="card route-card">
       <div class="route-track" id="routeTrack"></div>
       <div class="route-stats" id="routeStats"></div>
     </div>
   </div>
 </section>
 
-<!-- ── DISRUPTION CONTROL ──────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Disruption Scenario</span>
-    </div>
-    <h2 class="section-title">LA/LB Port Congestion — 2021 COVID Event</h2>
-    <p class="section-desc">
-      Calibrated to Watanabe et al. (2024): LA anchorage wait peaked at <strong>163.9 hrs</strong> during the
-      2021 supply-chain disruption. Adjust severity to explore recovery strategies.
-    </p>
-    <div class="control-wrap mt-24">
+<!-- ── 2 · DISRUPTION ────────────────────────────────────────── -->
+<section class="sec sec-alt" id="disruption">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">02</span>
+      <div>
+        <h2>Disruption scenario</h2>
+        <p class="sec-lede" id="disruptionLede">Choose the port the ship has just left and how late it is. Then run the optimiser.</p>
+      </div>
+    </header>
+    <div class="card control-wrap">
+      <div class="ctl ctl-start">
+        <label for="startPort">Ship has just left</label>
+        <select id="startPort"></select>
+      </div>
       <div class="slider-area">
         <div class="slider-label">
-          Disruption Delay
-          <span>
-            <span class="big-val" id="disruptionVal">140</span>
-            <span class="unit">hours</span>
-          </span>
+          <span>Departure delay</span>
+          <span><span class="big-val" id="delayVal">150</span> <span class="unit">hours</span></span>
         </div>
-        <input type="range" id="disruptionSlider" min="24" max="200" value="140" step="8" />
+        <input type="range" id="delay" min="0" max="400" step="6" value="150" />
         <div class="slider-marks">
-          <span>24 h · Minor</span>
-          <span>72 h · Moderate</span>
-          <span>140 h · Severe</span>
-          <span>200 h · Extreme</span>
+          <span>0 h · On time</span><span>100 h</span><span>200 h · Severe</span><span>300 h</span><span>400 h · Extreme</span>
         </div>
       </div>
-      <button class="btn btn-accent" id="runOptBtn" onclick="runOptimizer()">
-        Run Optimiser
-      </button>
+      <button class="btn" id="runBtn">Run optimiser</button>
     </div>
   </div>
 </section>
 
-<!-- ── MILP OPTIMIZER ─────────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">MILP Optimisation Results</span>
-    </div>
-    <h2 class="section-title">Schedule Recovery — Brouer et al. (EJOR 2013)</h2>
-    <p class="section-desc">
-      Mixed-Integer Linear Program minimising total voyage cost:
-      fuel (cubic in speed) + port dues + delay penalty + cargo-rollover penalty.
-      After clicking Run Optimiser, the <strong>Port Call Decisions</strong> panel below the charts
-      will show exactly which specific ports the algorithm chooses to skip or call.
-    </p>
-    <div class="math-box">
-      <p>
-        min &nbsp; &Sigma;<sub>legs</sub> [&delta;&middot;&radic;(10&middot;TEU)&middot;v&sup2;&middot;dist] &nbsp;+&nbsp;
-        &Sigma;<sub>ports</sub> [c<sup>berth</sup>&middot;(1&minus;x<sub>skip</sub>)] &nbsp;+&nbsp;
-        &pi;&middot;D<sub>residual</sub> &nbsp;+&nbsp;
-        &Sigma;<sub>skip</sub> [&omega;&middot;x<sub>skip</sub>]
-      </p>
+<!-- ── 3 · MILP ──────────────────────────────────────────────── -->
+<section class="sec" id="milp">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">03</span>
+      <div>
+        <h2>MILP optimisation results</h2>
+        <p class="sec-lede">A mixed-integer linear program (Brouer et al., 2013) decides the speed on every leg, which ports to call or skip, and whether to pay for faster cargo handling, so that the total cost is as small as possible.</p>
+      </div>
+    </header>
+
+    <div class="grid g-3-2">
+      <article class="card math-box">
+        <h3>Objective function and constraints</h3>
+        <div id="formula"></div>
+        <dl class="defs" id="formulaDefs"></dl>
+      </article>
+      <article class="card">
+        <h3>In plain words</h3>
+        <p class="pw"><b>Minimise</b> fuel + cargo delay + delay carried to the next loop + rollover of skipped cargo + extra handling.</p>
+        <p class="pw"><b>Subject to:</b></p>
+        <ol class="steps">
+          <li>One continuous route: every port called is entered once and left once.</li>
+          <li>Each leg is sailed between the minimum and maximum speed.</li>
+          <li>Arrival comes after the previous departure plus the sailing time.</li>
+          <li>Berthing starts only once the ship has arrived and the berth is open.</li>
+          <li>Berth time can be cut by at most 20%, only at ports that are called.</li>
+          <li>Lateness is measured against the planned berth time.</li>
+          <li>Los Angeles is always called; at most two ports may be skipped in a row.</li>
+        </ol>
+      </article>
     </div>
 
-    <!-- Charts row -->
-    <div class="grid-2 mt-16">
-      <div class="card">
-        <div class="card-title">Cost Breakdown — Baseline vs. Recovery</div>
-        <div class="placeholder" id="costPlaceholder">Awaiting optimiser run…</div>
-        <canvas id="costChart" style="display:none"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-title">Optimal Speed per Leg (knots)</div>
-        <div class="placeholder" id="speedPlaceholder">Awaiting optimiser run…</div>
-        <canvas id="speedChart" style="display:none"></canvas>
-      </div>
+    <div class="grid g-1-1">
+      <article class="card">
+        <h3>Cost breakdown: no recovery vs. MILP recovery</h3>
+        <div class="chart h-300"><div class="placeholder" id="costPh">Run the optimiser to see results</div><canvas id="costChart"></canvas></div>
+      </article>
+      <article class="card">
+        <h3>Optimal speed per leg (knots)</h3>
+        <div class="chart h-300"><div class="placeholder" id="speedPh">Run the optimiser to see results</div><canvas id="speedChart"></canvas></div>
+      </article>
     </div>
 
-    <!-- Savings panel -->
-    <div class="savings-panel" id="savingsPanel" style="display:none">
-      <div class="label-mono" style="margin-bottom:8px">Cost Reduction vs. No Recovery</div>
-      <div class="savings-number" id="savingsNum">&mdash;</div>
-      <div class="savings-caption">cost reduction vs. no recovery</div>
+    <div class="savings-panel card" id="savingsPanel" hidden>
+      <div>
+        <div class="savings-number" id="savingsNum">—</div>
+        <div class="savings-caption">cost reduction vs. no recovery</div>
+      </div>
       <div class="savings-detail" id="savingsDetail"></div>
     </div>
 
-    <!-- Skip decisions -->
     <div id="skipDecisions"></div>
   </div>
 </section>
 
-
-
-
-<!-- ── ML CLASSIFIER ─────────────────────────────────────────── -->
-<section class="page-section">
-  <div class="container">
-    <div class="section-eyebrow">
-      <span class="label-accent">Machine Learning — Port Skip Classifier</span>
-    </div>
-    <h2 class="section-title">XGBoost Skip Prediction — Ocean Engineering (2025)</h2>
-    <p class="section-desc">
-      Trained on 6,000 synthetic simulation events. The reference paper (CLPSO-XGBoost hybrid)
-      achieved 86% accuracy and 88% precision. Features: anchorage delay, queue length,
-      TEU capacity, leg distance, historical skip rate, handling efficiency.
-    </p>
-
-    <div class="grid-2 mt-24">
-      <div class="card">
-        <div class="card-title">Model Performance</div>
-        <div class="placeholder" id="mlMetricPlaceholder">Training classifier…</div>
-        <div id="mlMetrics" style="display:none">
-          <div class="metrics-grid" id="metricsGrid"></div>
-        </div>
+<!-- ── 4 · ML ────────────────────────────────────────────────── -->
+<section class="sec sec-alt" id="ml">
+  <div class="wrap">
+    <header class="sec-head">
+      <span class="sec-no">04</span>
+      <div>
+        <h2>Machine learning: XGBoost skip prediction</h2>
+        <p class="sec-lede" id="mlLede">Thousands of delay situations, drawn from the patterns in the Maersk schedules, are each solved exactly by the MILP. XGBoost learns from those answers which ports should be skipped, so it can advise instantly.</p>
       </div>
-      <div class="card">
-        <div class="card-title">Feature Importances</div>
-        <div class="placeholder" id="featPlaceholder">Loading…</div>
-        <canvas id="featChart" style="display:none"></canvas>
-      </div>
+    </header>
+
+    <div class="grid g-1-1">
+      <article class="card">
+        <h3>Model performance</h3>
+        <p class="note" id="perfNote">Held-out situations the model never saw.</p>
+        <div class="metrics-grid" id="metricsGrid"></div>
+        <div class="tiles tiles-2" id="regretTiles"></div>
+      </article>
+      <article class="card">
+        <h3>Feature importances</h3>
+        <p class="note">What the model looks at most when deciding to skip a port.</p>
+        <div class="chart h-300"><canvas id="featChart"></canvas></div>
+      </article>
     </div>
 
-    <!-- Live predictor -->
-    <div class="card mt-16" id="predictorCard">
-      <div class="card-title">Live Skip Probability Predictor</div>
-      <p class="sub-caption">
-        Adjust the parameters below — the trained XGBoost model predicts in real time whether a vessel
-        will skip the port under these conditions.
-      </p>
+    <!-- live predictor -->
+    <article class="card predictor" id="predictor">
+      <div class="card-head">
+        <h3>Live lateness predictor</h3>
+        <span class="pred-status" id="predStatus"></span>
+      </div>
+      <p class="note">Move the four sliders. For every upcoming port, the model shows when the ship will arrive, how late it will be, and the chance that the port is skipped.</p>
+
+      <div class="pred-top">
+        <div class="ctl"><label for="pStart">Ship has just left</label><select id="pStart"></select></div>
+        <div class="ctl"><label for="pCong">Jammed port ahead</label><select id="pCong"></select></div>
+      </div>
 
       <div class="predictor-sliders">
         <div class="pred-slider-group">
-          <label>
-            Anchorage Delay (hours)
-            <span class="pred-sub">Hours the vessel has been waiting at anchor outside the port</span>
-            <strong id="p_delay_val">80</strong>
-          </label>
-          <input type="range" id="p_delay" min="0" max="200" value="80" oninput="updatePredictor()" />
+          <label for="pDelay">Current delay<span class="pred-sub">How late the ship is when it leaves the port</span></label>
+          <strong id="pDelayVal">48 h</strong>
+          <input type="range" id="pDelay" min="0" max="400" step="6" value="48" />
         </div>
         <div class="pred-slider-group">
-          <label>
-            Queue Length (vessels)
-            <span class="pred-sub">Number of ships currently waiting ahead in the anchorage queue</span>
-            <strong id="p_queue_val">4</strong>
-          </label>
-          <input type="range" id="p_queue" min="0" max="20" value="4" oninput="updatePredictor()" />
+          <label for="pWait">Berth waiting at jammed port<span class="pred-sub">Hours after the plan before a berth is free</span></label>
+          <strong id="pWaitVal">150 h</strong>
+          <input type="range" id="pWait" min="0" max="400" step="6" value="150" />
         </div>
         <div class="pred-slider-group">
-          <label>
-            Terminal Handling Efficiency
-            <span class="pred-sub">Port crane/berth throughput relative to normal capacity (1.0 = 100% normal, 0.4 = severe congestion like LA/LB 2021)</span>
-            <strong id="p_heff_val">0.60</strong>
-          </label>
-          <input type="range" id="p_heff" min="0.3" max="1.0" value="0.6" step="0.05" oninput="updatePredictor()" />
+          <label for="pVmax">Maximum speed allowed<span class="pred-sub">How fast the ship may sail to catch up</span></label>
+          <strong id="pVmaxVal">22 kn</strong>
+          <input type="range" id="pVmax" min="16" max="24" step="0.5" value="22" />
         </div>
         <div class="pred-slider-group">
-          <label>
-            Days Since Disruption Onset
-            <span class="pred-sub">How long the congestion event has been ongoing — longer disruptions mean more backed-up cargo and less chance of quick recovery</span>
-            <strong id="p_days_val">20</strong>
-          </label>
-          <input type="range" id="p_days" min="0" max="90" value="20" oninput="updatePredictor()" />
+          <label for="pComp">Faster cargo handling<span class="pred-sub">Extra cranes: how much the port stay can be shortened</span></label>
+          <strong id="pCompVal">20%</strong>
+          <input type="range" id="pComp" min="0" max="20" step="1" value="20" />
         </div>
       </div>
 
-      <div class="prob-display">
-        <div>
-          <div class="label-mono" style="margin-bottom:4px">Skip Probability</div>
-          <div class="prob-bar-outer">
-            <div class="prob-bar-inner" id="probBar" style="width:50%"></div>
-          </div>
-          <div class="prob-verdict" id="probVerdict">Moderate risk — outcome uncertain</div>
-        </div>
-        <div>
-          <div class="prob-big" id="probValue" style="color:var(--paper)">50%</div>
-          <div class="prob-big-label">Probability</div>
-        </div>
-      </div>
-    </div>
+      <div class="fixed-row" id="fixedRow"></div>
+
+      <div class="pred-summary" id="predSummary"></div>
+      <div class="table-scroll"><table class="data pred-table" id="predTable"></table></div>
+    </article>
+
+    <article class="card models-card">
+      <h3>Ten models compared</h3>
+      <p class="note">Same held-out situations. Extra cost is how much more the plan costs than the exact MILP answer, so lower is better.</p>
+      <div class="table-scroll"><table class="data" id="modelTable"></table></div>
+    </article>
   </div>
 </section>
 
+</main>
 
-
-<!-- ── FOOTER ─────────────────────────────────────────────────── -->
-<footer class="footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="name">VSRP</div>
-      <div class="tagline">
-        Vessel Schedule Recovery Problem<br/>
-        Research Proof of Concept · 2025
-      </div>
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div>
+      <div class="foot-title">Vessel Schedule Recovery Problem</div>
+      <div class="foot-sub">Somya Bhadada · Roll No. 22MF3IM24 · IIT Kharagpur</div>
     </div>
-    <div class="footer-refs">
-      <p>Brouer, Dirksen, Pisinger, Plum &amp; Vaaben (2013). "The Vessel Schedule Recovery Problem." <em>European Journal of Operational Research</em>, 224(2), 362–374.</p>
-      <p>Watanabe et al. (2024). Trans-Pacific port congestion analysis. <em>IEEE International Conference on Big Data.</em></p>
-      <p>Kowatari &amp; Shibasaki (2025). Multi-agent simulation of liner schedule recovery. <em>IEEE International Conference on Big Data.</em></p>
-      <p>Open data: MarineCadastre AIS · UN/LOCODE · UNCTAD CPPI.</p>
-    </div>
+    <div class="foot-meta"><a href="/full/">Full version</a> · <a href="/v2/">Previous layout</a></div>
   </div>
 </footer>
 
-<script>
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('vsrp-theme', next);
-  // Reload the page so Chart.js canvases redraw with the new color palette
-  window.location.reload();
-}
-// Set correct icon on load
-document.addEventListener('DOMContentLoaded', function() {
-  const t = document.documentElement.getAttribute('data-theme');
-  document.getElementById('themeToggle').innerHTML = t === 'dark' ? '&#9680;' : '&#9788;';
-});
-</script>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
